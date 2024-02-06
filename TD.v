@@ -7,6 +7,7 @@ const bg_color = gg.Color{
 	g: 200
 	b: 0
 }
+const circuit_whidth = 60
 
 struct App {
 mut:
@@ -108,7 +109,33 @@ fn on_frame(mut app App) {
 	
 	// Draw
 	app.gg.begin()
-	app.gg.draw_rect_filled(0, 2 * app.gg.window_size().height/5, app.gg.window_size().width, app.gg.window_size().height/5, gg.Color{r: 217, g: 186, b: 111})
+	for circuit in app.map.circuits{
+		mut to_draw :=  [][]int{} // [][x1, y1, x2, y2]
+		mut index_max := 0
+		for index, pos in circuit{
+			if index > index_max && index < circuit.len -1{
+				dif_x := circuit[index + 1][0] - pos[0]
+				dif_y := circuit[index + 1][1] - pos[1]
+				mut ad := 1
+				for _ in index..circuit.len-2{
+					if (dif_x*(index + ad)  == circuit[index + ad][0] || dif_x == circuit[index + ad][0] - pos[0]) && (dif_y*(index + ad) == circuit[index + ad][1] || dif_y == circuit[index + ad][1] - pos[1]){
+						ad += 1
+					}
+				}
+				to_draw << [pos[0], pos[1] - circuit_whidth/2, circuit[index + ad][0], circuit[index + ad][1]- circuit_whidth/2]
+				index_max = index + ad
+			}
+		}
+		conf := gg.PenConfig {gg.Color{r: 217, g: 186, b: 111}, .solid, circuit_whidth}
+		for draw in to_draw{
+			x1 := draw[0]
+			y1 := draw[1]
+			x2 := draw[2]
+			y2 := draw[3]
+			app.gg.draw_line_with_config(x1, y1, x2, y2, conf)
+		}
+	}
+
 	mut indexes := []int{}
 	for mut ennemi in app.map.ennemis {
 		app.gg.draw_circle_filled(ennemi.pos_xy[0], ennemi.pos_xy[1], 10, gg.Color{r: 255})
