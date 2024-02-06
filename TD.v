@@ -7,7 +7,7 @@ const bg_color = gg.Color{
 	g: 200
 	b: 0
 }
-const circuit_whidth = 60
+const circuit_whidth = 160
 
 struct App {
 mut:
