@@ -20,6 +20,7 @@ struct Map {
 	ennemi_spawn [][]f32
 	circuits [][][]f32
 mut:
+	circuit_to_drawn	[][]int	// [][x1, y1, x2, y2]
 	projectiles []Projectile
 	tours []Tower
 	ennemis []Ennemi
@@ -70,6 +71,30 @@ fn main() {
 		event_fn: on_event
 		sample_count: 2
 	)
+	app.map = Map {ennemi_spawn: [[0, 384]], circuits: [][][]int{len: 1, init: [][]int{len: 1380, init: [380, index]}}}
+
+	// Calcul des parties de circuit a draw
+	for circuit in app.map.circuits{
+		mut index_max := 0
+		for index, pos in circuit{
+			if index > index_max && index < circuit.len -1{
+				dif_x := circuit[index + 1][0] - pos[0]
+				dif_y := circuit[index + 1][1] - pos[1]
+				mut ad := 1
+				for _ in index..circuit.len-2{
+					if (dif_x*(index + ad)  == circuit[index + ad][0] || dif_x == circuit[index + ad][0] - pos[0]) && (dif_y*(index + ad) == circuit[index + ad][1] || dif_y == circuit[index + ad][1] - pos[1]){
+						ad += 1
+					}
+				}
+				x1 := pos[0] + circuit_whidth/2
+				y1 := pos[1] - circuit_whidth/2
+				x2 := circuit[index + ad][0] + circuit_whidth/2
+				y2 := circuit[index + ad][1] - circuit_whidth/2
+				app.map.circuit_to_drawn << [x1, y1, x2, y2]
+				index_max = index + ad
+			}
+		}
+	}
 	app.map = Map {ennemi_spawn: [[f32(0), f32(384)]], circuits: [][][]f32{len: 1, init: [][]f32{len: 2760, init: [index / f32(2), f32(384)]}}}
 
 	// lancement du programme/de la fenêtre
@@ -111,31 +136,13 @@ fn on_frame(mut app App) {
 	
 	// Draw
 	app.gg.begin()
-	for circuit in app.map.circuits{
-		mut to_draw :=  [][]int{} // [][x1, y1, x2, y2]
-		mut index_max := 0
-		for index, pos in circuit{
-			if index > index_max && index < circuit.len -1{
-				dif_x := circuit[index + 1][0] - pos[0]
-				dif_y := circuit[index + 1][1] - pos[1]
-				mut ad := 1
-				for _ in index..circuit.len-2{
-					if (dif_x*(index + ad)  == circuit[index + ad][0] || dif_x == circuit[index + ad][0] - pos[0]) && (dif_y*(index + ad) == circuit[index + ad][1] || dif_y == circuit[index + ad][1] - pos[1]){
-						ad += 1
-					}
-				}
-				to_draw << [pos[0], pos[1] - circuit_whidth/2, circuit[index + ad][0], circuit[index + ad][1]- circuit_whidth/2]
-				index_max = index + ad
-			}
-		}
-		conf := gg.PenConfig {gg.Color{r: 217, g: 186, b: 111}, .solid, circuit_whidth}
-		for draw in to_draw{
-			x1 := draw[0]
-			y1 := draw[1]
-			x2 := draw[2]
-			y2 := draw[3]
-			app.gg.draw_line_with_config(x1, y1, x2, y2, conf)
-		}
+	conf := gg.PenConfig {gg.Color{r: 217, g: 186, b: 111}, .solid, circuit_whidth}
+	for draw in app.map.circuit_to_drawn{
+		x1 := draw[0]
+		y1 := draw[1]
+		x2 := draw[2]
+		y2 := draw[3]
+		app.gg.draw_line_with_config(x1, y1, x2, y2, conf)
 	}
 
 	mut indexes := []int{}
