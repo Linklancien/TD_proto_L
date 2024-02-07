@@ -17,8 +17,8 @@ mut:
 }
 
 struct Map {
-	ennemi_spawn [][]int
-	circuits [][][]int
+	ennemi_spawn [][]f32
+	circuits [][][]f32
 mut:
 	projectiles []Projectile
 	tours []Tower
@@ -31,7 +31,7 @@ mut:
 struct Ennemi {
 	circuit int
 mut:
-	pos_xy []int
+	pos_xy []f32
 	pos_relatif int
 	pv int
 }
@@ -41,6 +41,8 @@ struct Tower {
 	range int
 	degats int
 	pos []int
+mut:
+	cooldown int = 60
 }
 
 struct Projectile {
@@ -68,7 +70,7 @@ fn main() {
 		event_fn: on_event
 		sample_count: 2
 	)
-	app.map = Map {ennemi_spawn: [[0, 384]], circuits: [][][]int{len: 1, init: [][]int{len: 1380, init: [index, 384]}}}
+	app.map = Map {ennemi_spawn: [[f32(0), f32(384)]], circuits: [][][]f32{len: 1, init: [][]f32{len: 2760, init: [index / f32(2), f32(384)]}}}
 
 	// lancement du programme/de la fenêtre
 	app.gg.run()
@@ -80,7 +82,7 @@ fn on_frame(mut app App) {
 		app.map.ennemis << Ennemi{pos_xy: app.map.ennemi_spawn[0].clone(), pos_relatif: 0, circuit: 0}
 	}
 	
-	mut distance_min := 90 * 90
+	mut distance_min := f32(90 * 90)
 	for circuit in app.map.circuits {
 		for point_circuit in circuit {
 			if (point_circuit[0] - app.gg.mouse_pos_x) * (point_circuit[0] - app.gg.mouse_pos_x) + (point_circuit[1] - app.gg.mouse_pos_y) * (point_circuit[1] - app.gg.mouse_pos_y) < distance_min {
@@ -157,18 +159,22 @@ fn on_frame(mut app App) {
 			app.gg.draw_circle_filled(app.gg.mouse_pos_x, app.gg.mouse_pos_y, 100, gg.Color{r: 220, g: 103, b: 103, a: 50})
 		}
 	}
-	for tour in app.map.tours {
+	for mut tour in app.map.tours {
+		if tour.cooldown > 0 {
+			tour.cooldown -= 1
+		}
 		app.gg.draw_circle_filled(tour.pos[0], tour.pos[1], tour.radius, gg.Color{r: 103, g: 103, b: 103})
 		app.gg.draw_circle_filled(tour.pos[0], tour.pos[1], tour.range, gg.Color{r: 103, g: 103, b: 103, a: 100})
 		for ennemi in app.map.ennemis {
-			if tour.detect(ennemi) {
-				app.map.projectiles << Projectile{radius: 2, pos: [f32(tour.pos[0]), f32(tour.pos[1])], vitesse: 500, life_span: 120}
+			if tour.detect(ennemi) && tour.cooldown == 0 {
+				tour.cooldown = 60
+				app.map.projectiles << Projectile{radius: 2, pos: [f32(tour.pos[0]), f32(tour.pos[1])], vitesse: 750, life_span: 120}
 				app.map.projectiles[app.map.projectiles.len - 1].vecteur_directeur = app.map.projectiles[app.map.projectiles.len - 1].find_vector(ennemi, app.map.circuits[ennemi.circuit])
 			}
 		}
 	}
 	for projectile in app.map.projectiles {
-		app.gg.draw_circle_filled(projectile.pos[0], projectile.pos[1], projectile.radius, gg.Color{r: 255, g: 255, b: 128, a: 200})
+		app.gg.draw_circle_filled(projectile.pos[0], projectile.pos[1], projectile.radius, gg.Color{})
 	}
 	app.gg.show_fps()
 	app.gg.end()
@@ -205,8 +211,8 @@ fn on_event(e &gg.Event, mut app App) {
 	}
 }
 
-fn (e Ennemi) move (circuit [][]int) (int, []int) {
-	return e.pos_relatif + 1, circuit[e.pos_relatif + 1]
+fn (e Ennemi) move (circuit [][]f32) (int, []f32) {
+	return e.pos_relatif + 1, circuit[e.pos_relatif + 1].clone()
 }
 
 fn (t Tower) detect (ennemi Ennemi) bool {
@@ -217,9 +223,9 @@ fn (t Tower) detect (ennemi Ennemi) bool {
 	return detection
 }
 
-fn (p Projectile) find_vector (ennemi Ennemi, circuit[][]int) []f32 {
-	norme := f32((circuit[ennemi.pos_relatif + 10][0] - p.pos[0]) * (circuit[ennemi.pos_relatif + 10][0] - p.pos[0]) + (circuit[ennemi.pos_relatif + 10][1] - p.pos[1]) * (circuit[ennemi.pos_relatif + 10][1] - p.pos[1]))
-	return [((circuit[ennemi.pos_relatif + 10][0] - p.pos[0]) / norme) * p.vitesse, ((circuit[ennemi.pos_relatif + 10][1] - p.pos[1]) / norme) * p.vitesse]
+fn (p Projectile) find_vector (ennemi Ennemi, circuit[][]f32) []f32 {
+	norme := (circuit[ennemi.pos_relatif][0] - p.pos[0]) * (circuit[ennemi.pos_relatif][0] - p.pos[0]) + (circuit[ennemi.pos_relatif][1] - p.pos[1]) * (circuit[ennemi.pos_relatif][1] - p.pos[1])
+	return [((circuit[ennemi.pos_relatif][0] - p.pos[0]) / norme) * p.vitesse, ((circuit[ennemi.pos_relatif][1] - p.pos[1]) / norme) * p.vitesse]
 }
 
 //fn (p Projectile) move () []int {
