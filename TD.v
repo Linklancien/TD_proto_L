@@ -72,7 +72,7 @@ fn main() {
 		event_fn: on_event
 		sample_count: 2
 	)
-	app.map = Map {ennemi_spawn: [[f32(0), f32(384)]], circuits: [][][]f32{len: 1, init: [][]f32{len: 1380, init: [f32(index), f32(380)]}}}
+	app.map = Map {ennemi_spawn: [[f32(0), f32(384)]], circuits: [][][]f32{len: 1, init: [][]f32{len: 1380, init: [f32(index), f32(index)]}}}
 
 	// Calcul des parties de circuit a draw
 	for circuit in app.map.circuits{
@@ -93,18 +93,45 @@ fn main() {
 				mut cos := f32(0)
 				mut sin := f32(0)
 				if dif_x != 0{
-					cos = h/dif_x
+					cos = h/math.abs(dif_x)
+					cos = f32(math.cos(math.acosh(cos)))
+					cos = cos*circuit_whidth/2
 				}
 				if dif_y != 0{
-					sin = h/dif_y
-				}
-				sin = sin*circuit_whidth/2
-				cos = cos*circuit_whidth/2
+					sin = h/math.abs(dif_y)
+					sin = f32(math.sin(math.asinh(sin)))
+					sin = sin*circuit_whidth/2
+				}	
 
-				x1 := pos[0] + sin
-				y1 := pos[1] - cos
-				x2 := circuit[index + ad][0] + sin
-				y2 := circuit[index + ad][1] - cos
+				// Selec
+				mut ad_x := 0.0
+				mut ad_y := 0.0
+
+				if dif_x < 0{
+					if dif_y < 0{
+						ad_y = sin
+						ad_x = - cos
+					}
+					else{
+						ad_y = - sin
+						ad_x = cos
+					}
+				}
+				else{
+					if dif_y < 0{
+						ad_y = cos
+						ad_x = - sin
+					}
+					else{
+						ad_y = -cos
+						ad_x = sin
+					}
+				}
+
+				x1 := pos[0] + ad_x
+				y1 := pos[1] + ad_y
+				x2 := circuit[index + ad][0] + ad_x
+				y2 := circuit[index + ad][1] + ad_y
 				app.map.circuit_to_drawn << [f32(x1), f32(y1), f32(x2), f32(y2)]
 				index_max = index + ad
 			}
