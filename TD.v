@@ -1,5 +1,4 @@
 import gg
-import math
 
 const win_width = 601
 const win_height = 601
@@ -8,7 +7,7 @@ const bg_color = gg.Color{
 	g: 200
 	b: 0
 }
-const circuit_whidth = 160
+const circuit_whidth = 80
 
 struct App {
 mut:
@@ -83,55 +82,15 @@ fn main() {
 				dif_y := f32(circuit[index + 1][1] - pos[1])
 				mut ad := 1
 				for _ in index..circuit.len-2{
-					if (dif_x*(index + ad)  == circuit[index + ad][0] || dif_x == circuit[index + ad][0] - pos[0]) && (dif_y*(index + ad) == circuit[index + ad][1] || dif_y == circuit[index + ad][1] - pos[1]){
+					if (dif_x*(ad) + pos[0]  == circuit[index + ad][0] || dif_x == f32((circuit[index + ad][0] - pos[0])/ad)) && (dif_y*(ad) + pos[1] == circuit[index + ad][1] || dif_y == f32((circuit[index + ad][1] - pos[1])/ad)){
 						ad += 1
 					}
 				}
 
-				// Ajustement due au fonctionnement de draw_line_with_config
-				h := f32(math.sqrt(dif_x*dif_x + dif_y*dif_y))
-				mut cos := f32(0)
-				mut sin := f32(0)
-				if dif_x != 0{
-					cos = h/math.abs(dif_x)
-					cos = f32(math.cos(math.acosh(cos)))
-					cos = cos*circuit_whidth/2
-				}
-				if dif_y != 0{
-					sin = h/math.abs(dif_y)
-					sin = f32(math.sin(math.asinh(sin)))
-					sin = sin*circuit_whidth/2
-				}	
-
-				// Selec
-				mut ad_x := 0.0
-				mut ad_y := 0.0
-
-				if dif_x < 0{
-					if dif_y < 0{
-						ad_y = sin
-						ad_x = - cos
-					}
-					else{
-						ad_y = - sin
-						ad_x = cos
-					}
-				}
-				else{
-					if dif_y < 0{
-						ad_y = cos
-						ad_x = - sin
-					}
-					else{
-						ad_y = -cos
-						ad_x = sin
-					}
-				}
-
-				x1 := pos[0] + ad_x
-				y1 := pos[1] + ad_y
-				x2 := circuit[index + ad][0] + ad_x
-				y2 := circuit[index + ad][1] + ad_y
+				x1 := pos[0] 
+				y1 := pos[1]
+				x2 := circuit[index + ad][0]
+				y2 := circuit[index + ad][1]
 				app.map.circuit_to_drawn << [f32(x1), f32(y1), f32(x2), f32(y2)]
 				index_max = index + ad
 			}
@@ -184,6 +143,7 @@ fn on_frame(mut app App) {
 		x2 := draw[2]
 		y2 := draw[3]
 		app.gg.draw_line_with_config(x1, y1, x2, y2, conf)
+		app.gg.draw_line_with_config(x2, y2, x1, y1, conf)
 	}
 
 	mut indexes := []int{}
