@@ -82,7 +82,7 @@ fn main() {
 				dif_y := f32(circuit[index + 1][1] - pos[1])
 				mut ad := 1
 				for _ in index..circuit.len-2{
-					if (dif_x*(ad) + pos[0]  == circuit[index + ad][0] || dif_x == f32((circuit[index + ad][0] - pos[0])/ad)) && (dif_y*(ad) + pos[1] == circuit[index + ad][1] || dif_y == f32((circuit[index + ad][1] - pos[1])/ad)){
+					if (dif_x*(ad) + pos[0]  == circuit[index + ad][0]) && (dif_y*(ad) + pos[1] == circuit[index + ad][1]){
 						ad += 1
 					}
 				}
