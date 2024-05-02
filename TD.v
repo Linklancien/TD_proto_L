@@ -8,6 +8,7 @@ const bg_color = gg.Color{
 	b: 0
 }
 const circuit_whidth = 80
+const tollerance = 10
 
 struct App {
 mut:
@@ -18,8 +19,9 @@ mut:
 
 struct Map {
 	ennemi_spawn [][]f32
-	circuits [][][]f32
+	
 mut:
+	circuits [][][]f32
 	circuit_to_drawn	[][]f32	// [][x1, y1, x2, y2]
 	projectiles []Projectile
 	tours []Tower
@@ -71,7 +73,9 @@ fn main() {
 		event_fn: on_event
 		sample_count: 2
 	)
-	app.map = Map {ennemi_spawn: [[f32(0), f32(384)]], circuits: [][][]f32{len: 1, init: [][]f32{len: 1380, init: [f32(index), f32(index)]}}}
+	app.map = Map{ennemi_spawn: [[f32(0), f32(0)]], circuits: [][][]f32{len: 1, init: [][]f32{len: 100, init: [f32(index), f32(index)]}}}
+	app.map.circuits[0] << [][]f32{len: 1000, init: [f32(index+100), 100]}
+
 
 	// Calcul des parties de circuit a draw
 	for circuit in app.map.circuits{
@@ -82,9 +86,15 @@ fn main() {
 				dif_y := f32(circuit[index + 1][1] - pos[1])
 				mut ad := 1
 				for _ in index..circuit.len-2{
-					if (dif_x*(ad) + pos[0]  == circuit[index + ad][0]) && (dif_y*(ad) + pos[1] == circuit[index + ad][1]){
-						ad += 1
-					}
+					// X
+					dif_x_time_ad := dif_x*(ad) + pos[0]
+					if (circuit[index + ad][0] - tollerance) < dif_x_time_ad  && dif_x_time_ad < (circuit[index + ad][0] + tollerance) {
+						// Y
+						dif_y_time_ad := dif_y*(ad) + pos[1]
+						if (circuit[index + ad][1] - tollerance) < dif_y_time_ad  && dif_y_time_ad < (circuit[index + ad][1] + tollerance) {
+							ad += 1
+						}
+					} 
 				}
 
 				x1 := pos[0] 
@@ -142,6 +152,7 @@ fn on_frame(mut app App) {
 		y1 := draw[1]
 		x2 := draw[2]
 		y2 := draw[3]
+		app.gg.draw_circle_filled(x1, y1, circuit_whidth, gg.Color{r: 217, g: 186, b: 111})
 		app.gg.draw_line_with_config(x1, y1, x2, y2, conf)
 		app.gg.draw_line_with_config(x2, y2, x1, y1, conf)
 	}
